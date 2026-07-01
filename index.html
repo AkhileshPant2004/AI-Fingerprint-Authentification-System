@@ -1,0 +1,1335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ASTRONIC :: Multi-Biometric Command Core</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<style>
+  :root{
+    --void-950:#05070d;
+    --obsidian-900:#0a0e18;
+    --obsidian-850:#0d1220;
+    --obsidian-800:#121829;
+    --obsidian-750:#161d32;
+    --slate-700:#28304a;
+    --slate-600:#3a4360;
+    --slate-500:#556082;
+    --slate-400:#7783a6;
+    --text-100:#e8ecf7;
+    --text-300:#b7c0da;
+    --text-500:#8590b3;
+    --cyan-400:#37f0e6;
+    --cyan-300:#7ff8ef;
+    --cyan-glow:rgba(55,240,230,0.35);
+    --coral-500:#ff5566;
+    --coral-400:#ff7d8a;
+    --coral-glow:rgba(255,85,102,0.32);
+    --amber-400:#ffb454;
+    --font-ui:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+    --font-mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+    --radius-sm:4px;
+    --radius-md:8px;
+    --radius-lg:14px;
+  }
+
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  html{color-scheme:dark;}
+  body{
+    background:
+      radial-gradient(ellipse 1200px 800px at 15% -10%, rgba(55,240,230,0.06), transparent 60%),
+      radial-gradient(ellipse 900px 700px at 100% 110%, rgba(255,85,102,0.05), transparent 55%),
+      var(--void-950);
+    color:var(--text-100);
+    font-family:var(--font-ui);
+    min-height:100vh;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  ::selection{background:var(--cyan-glow);color:var(--void-950);}
+  ::-webkit-scrollbar{width:10px;height:10px;}
+  ::-webkit-scrollbar-track{background:var(--obsidian-900);}
+  ::-webkit-scrollbar-thumb{background:var(--slate-600);border-radius:8px;}
+  ::-webkit-scrollbar-thumb:hover{background:var(--slate-500);}
+
+  a{color:inherit;}
+  button{font-family:inherit;cursor:pointer;}
+  input,select,textarea{font-family:inherit;}
+  :focus-visible{outline:2px solid var(--cyan-400);outline-offset:2px;}
+
+  .mono{font-family:var(--font-mono);}
+
+  /* ============================== APP SHELL ============================== */
+  .app-shell{
+    display:grid;
+    grid-template-columns:250px 1fr;
+    min-height:100vh;
+  }
+
+  /* ============================== SIDEBAR ============================== */
+  .sidebar{
+    background:linear-gradient(180deg, var(--obsidian-900) 0%, var(--void-950) 100%);
+    border-right:1px solid var(--slate-700);
+    display:flex;
+    flex-direction:column;
+    position:sticky;
+    top:0;
+    height:100vh;
+    z-index:20;
+  }
+  .brand{
+    padding:22px 20px 18px;
+    border-bottom:1px solid var(--slate-700);
+    display:flex;
+    align-items:center;
+    gap:12px;
+  }
+  .brand-mark{
+    width:34px;height:34px;flex:none;
+    border-radius:8px;
+    background:conic-gradient(from 220deg, var(--cyan-400), var(--slate-700) 60%, var(--coral-500) 100%);
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 0 18px var(--cyan-glow);
+  }
+  .brand-mark svg{width:18px;height:18px;}
+  .brand-text{display:flex;flex-direction:column;}
+  .brand-text .name{font-weight:800;font-size:13px;letter-spacing:0.08em;}
+  .brand-text .sub{font-family:var(--font-mono);font-size:9.5px;color:var(--text-500);letter-spacing:0.06em;margin-top:2px;}
+
+  .nav{flex:1;padding:16px 12px;display:flex;flex-direction:column;gap:4px;overflow-y:auto;}
+  .nav-label{font-family:var(--font-mono);font-size:9.5px;color:var(--slate-500);letter-spacing:0.12em;text-transform:uppercase;padding:10px 10px 6px;}
+  .nav-item{
+    display:flex;align-items:center;gap:10px;
+    padding:10px 12px;
+    border-radius:var(--radius-md);
+    color:var(--text-300);
+    font-size:13px;font-weight:500;
+    border:1px solid transparent;
+    background:transparent;
+    width:100%;
+    text-align:left;
+    transition:background .15s ease, border-color .15s ease, color .15s ease;
+    position:relative;
+  }
+  .nav-item svg{width:16px;height:16px;flex:none;opacity:0.85;}
+  .nav-item:hover{background:var(--obsidian-800);color:var(--text-100);}
+  .nav-item.active{
+    background:linear-gradient(90deg, rgba(55,240,230,0.12), rgba(55,240,230,0.02));
+    border-color:rgba(55,240,230,0.35);
+    color:var(--cyan-300);
+  }
+  .nav-item.active::before{
+    content:"";position:absolute;left:-12px;top:50%;transform:translateY(-50%);
+    width:3px;height:60%;background:var(--cyan-400);border-radius:2px;
+    box-shadow:0 0 8px var(--cyan-glow);
+  }
+  .nav-item .tag{
+    margin-left:auto;font-family:var(--font-mono);font-size:9px;
+    color:var(--slate-500);
+  }
+
+  .sidebar-foot{
+    border-top:1px solid var(--slate-700);
+    padding:14px 18px 16px;
+    font-family:var(--font-mono);
+    font-size:10px;
+    color:var(--text-500);
+    display:flex;flex-direction:column;gap:8px;
+  }
+  .cluster-line{display:flex;align-items:center;gap:8px;}
+  .pulse-dot{
+    width:7px;height:7px;border-radius:50%;flex:none;
+    background:var(--cyan-400);
+    box-shadow:0 0 6px var(--cyan-glow);
+    animation:pulse-glow 2.2s ease-in-out infinite;
+  }
+  .pulse-dot.offline{background:var(--coral-500);box-shadow:0 0 6px var(--coral-glow);animation:none;}
+  @keyframes pulse-glow{
+    0%,100%{opacity:1;transform:scale(1);}
+    50%{opacity:.45;transform:scale(0.8);}
+  }
+  .cluster-url{color:var(--text-300);word-break:break-all;font-size:9.5px;}
+  #sidebarClock{color:var(--slate-400);}
+
+  /* ============================== MAIN ============================== */
+  .main{display:flex;flex-direction:column;min-height:100vh;}
+  .topbar{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:18px 30px;
+    border-bottom:1px solid var(--slate-700);
+    background:rgba(10,14,24,0.6);
+    backdrop-filter:blur(6px);
+    position:sticky;top:0;z-index:10;
+  }
+  .topbar-title{display:flex;flex-direction:column;gap:3px;}
+  .topbar-title h1{font-size:18px;font-weight:700;letter-spacing:0.01em;}
+  .topbar-title .crumb{font-family:var(--font-mono);font-size:10.5px;color:var(--text-500);letter-spacing:0.05em;}
+  .topbar-right{display:flex;align-items:center;gap:14px;}
+  .session-chip{
+    font-family:var(--font-mono);font-size:10.5px;color:var(--text-300);
+    border:1px solid var(--slate-700);border-radius:20px;padding:6px 12px;
+    display:flex;align-items:center;gap:7px;
+  }
+  .btn-ghost{
+    background:transparent;border:1px solid var(--slate-700);color:var(--text-300);
+    border-radius:var(--radius-sm);padding:7px 13px;font-size:12px;font-weight:600;
+    transition:border-color .15s, color .15s;
+  }
+  .btn-ghost:hover{border-color:var(--coral-500);color:var(--coral-400);}
+
+  .content{flex:1;padding:26px 30px 60px;max-width:1400px;width:100%;margin:0 auto;}
+  .view{display:none;animation:fade-in .25s ease;}
+  .view.active{display:block;}
+  @keyframes fade-in{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;}}
+
+  /* ============================== CARDS / PRIMITIVES ============================== */
+  .panel{
+    background:linear-gradient(180deg, var(--obsidian-800), var(--obsidian-850));
+    border:1px solid var(--slate-700);
+    border-radius:var(--radius-lg);
+    padding:20px;
+  }
+  .panel-header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:16px;gap:10px;flex-wrap:wrap;}
+  .panel-header h2{font-size:14px;font-weight:700;letter-spacing:0.02em;}
+  .panel-header .hint{font-family:var(--font-mono);font-size:10px;color:var(--text-500);}
+
+  .metric-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px;}
+  .metric-card{
+    background:radial-gradient(circle at 100% 0%, rgba(55,240,230,0.07), transparent 55%), var(--obsidian-800);
+    border:1px solid var(--slate-700);
+    border-radius:var(--radius-lg);
+    padding:18px;
+    position:relative;
+    overflow:hidden;
+  }
+  .metric-card::after{
+    content:"";position:absolute;inset:0;
+    background-image:linear-gradient(var(--slate-700) 1px, transparent 1px),linear-gradient(90deg, var(--slate-700) 1px, transparent 1px);
+    background-size:14px 14px;opacity:0.06;pointer-events:none;
+  }
+  .metric-label{font-family:var(--font-mono);font-size:10px;color:var(--text-500);letter-spacing:0.08em;text-transform:uppercase;}
+  .metric-value{font-family:var(--font-mono);font-size:30px;font-weight:600;color:var(--text-100);margin-top:8px;}
+  .metric-value .unit{font-size:13px;color:var(--slate-400);margin-left:4px;}
+  .metric-foot{margin-top:10px;font-size:11px;color:var(--text-500);display:flex;align-items:center;gap:6px;}
+  .metric-foot .dot{width:6px;height:6px;border-radius:50%;background:var(--cyan-400);}
+
+  .grid-two{display:grid;grid-template-columns:1.3fr 1fr;gap:18px;}
+  .badge{
+    display:inline-flex;align-items:center;gap:5px;
+    font-family:var(--font-mono);font-size:10px;font-weight:600;letter-spacing:0.03em;
+    padding:3px 9px;border-radius:20px;border:1px solid;
+    text-transform:uppercase;
+  }
+  .badge.low{color:var(--slate-400);border-color:var(--slate-600);background:rgba(122,133,166,0.08);}
+  .badge.medium{color:var(--amber-400);border-color:rgba(255,180,84,0.4);background:rgba(255,180,84,0.08);}
+  .badge.high{color:var(--cyan-300);border-color:rgba(55,240,230,0.4);background:rgba(55,240,230,0.08);}
+  .badge.top_secret{color:var(--coral-400);border-color:rgba(255,85,102,0.45);background:rgba(255,85,102,0.1);}
+  .badge.unspecified{color:var(--text-500);border-color:var(--slate-700);}
+
+  .flag{font-family:var(--font-mono);font-size:11px;padding:2px 7px;border-radius:4px;font-weight:600;}
+  .flag.yes{color:var(--cyan-300);background:rgba(55,240,230,0.08);}
+  .flag.no{color:var(--text-500);background:rgba(122,133,166,0.06);}
+
+  /* ============================== BUTTONS ============================== */
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    background:var(--cyan-400);color:var(--void-950);
+    border:none;border-radius:var(--radius-sm);
+    padding:11px 20px;font-size:13px;font-weight:700;letter-spacing:0.02em;
+    transition:transform .12s ease, box-shadow .15s ease, opacity .15s ease;
+    box-shadow:0 0 0 rgba(55,240,230,0);
+  }
+  .btn:hover:not(:disabled){box-shadow:0 0 22px var(--cyan-glow);transform:translateY(-1px);}
+  .btn:disabled{opacity:0.45;cursor:not-allowed;}
+  .btn.secondary{background:transparent;color:var(--text-100);border:1px solid var(--slate-600);}
+  .btn.secondary:hover:not(:disabled){border-color:var(--cyan-400);color:var(--cyan-300);box-shadow:none;}
+  .btn.danger{background:var(--coral-500);color:#1a0507;}
+  .btn.danger:hover:not(:disabled){box-shadow:0 0 22px var(--coral-glow);}
+  .btn.block{width:100%;}
+  .btn .spinner{width:14px;height:14px;border-radius:50%;border:2px solid rgba(0,0,0,0.25);border-top-color:currentColor;animation:spin .7s linear infinite;display:none;}
+  .btn.loading .spinner{display:inline-block;}
+  .btn.loading .btn-label{opacity:0.7;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  /* ============================== FORMS ============================== */
+  .field{display:flex;flex-direction:column;gap:6px;margin-bottom:16px;}
+  .field label{font-size:11.5px;font-weight:600;color:var(--text-300);letter-spacing:0.02em;}
+  .field .desc{font-size:10.5px;color:var(--text-500);}
+  .field input[type="text"],
+  .field input[type="number"],
+  .field input[type="password"],
+  .field select{
+    background:var(--obsidian-900);
+    border:1px solid var(--slate-700);
+    border-radius:var(--radius-sm);
+    padding:11px 12px;
+    color:var(--text-100);
+    font-size:13px;
+    font-family:var(--font-mono);
+    transition:border-color .15s ease, box-shadow .15s ease;
+  }
+  .field input:focus,.field select:focus{border-color:var(--cyan-400);box-shadow:0 0 0 3px rgba(55,240,230,0.12);outline:none;}
+  .field select{appearance:none;background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="6"><path d="M0 0l5 6 5-6z" fill="%237783a6"/></svg>');background-repeat:no-repeat;background-position:right 14px center;}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px 18px;}
+
+  /* dropzone */
+  .dropzone{
+    border:1.5px dashed var(--slate-600);
+    border-radius:var(--radius-md);
+    padding:18px;
+    text-align:center;
+    cursor:pointer;
+    background:var(--obsidian-900);
+    transition:border-color .15s ease, background .15s ease;
+    position:relative;
+  }
+  .dropzone:hover,.dropzone.dragover{border-color:var(--cyan-400);background:rgba(55,240,230,0.04);}
+  .dropzone.filled{border-style:solid;border-color:var(--cyan-400);}
+  .dropzone input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer;}
+  .dropzone-icon{width:26px;height:26px;margin:0 auto 8px;color:var(--slate-400);}
+  .dropzone-title{font-size:12px;font-weight:600;color:var(--text-300);}
+  .dropzone-sub{font-family:var(--font-mono);font-size:10px;color:var(--text-500);margin-top:4px;word-break:break-all;padding:0 6px;}
+  .dropzone-preview{margin-top:10px;display:flex;justify-content:center;}
+  .dropzone-preview img{max-height:64px;border-radius:6px;border:1px solid var(--slate-700);}
+
+  /* ============================== ALERT / TOAST CARDS ============================== */
+  .toast-stack{position:fixed;top:20px;right:20px;z-index:200;display:flex;flex-direction:column;gap:10px;max-width:340px;}
+  .toast{
+    background:var(--obsidian-800);border:1px solid var(--slate-700);border-left:3px solid var(--cyan-400);
+    border-radius:var(--radius-md);padding:13px 15px;font-size:12.5px;color:var(--text-100);
+    box-shadow:0 10px 30px rgba(0,0,0,0.4);
+    animation:toast-in .2s ease;
+  }
+  .toast.error{border-left-color:var(--coral-500);}
+  .toast .t-title{font-weight:700;font-size:11.5px;letter-spacing:0.03em;margin-bottom:3px;font-family:var(--font-mono);text-transform:uppercase;}
+  .toast.error .t-title{color:var(--coral-400);}
+  .toast:not(.error) .t-title{color:var(--cyan-300);}
+  @keyframes toast-in{from{opacity:0;transform:translateX(16px);}to{opacity:1;transform:none;}}
+
+  .inline-alert{
+    border-radius:var(--radius-md);padding:12px 14px;font-size:12.5px;
+    border:1px solid var(--slate-700);background:var(--obsidian-900);
+    display:flex;gap:10px;align-items:flex-start;margin-top:14px;
+  }
+  .inline-alert.error{border-color:rgba(255,85,102,0.4);background:rgba(255,85,102,0.06);color:var(--coral-400);}
+  .inline-alert.success{border-color:rgba(55,240,230,0.4);background:rgba(55,240,230,0.06);color:var(--cyan-300);}
+
+  /* ============================== TABLE ============================== */
+  .table-wrap{overflow-x:auto;border-radius:var(--radius-md);border:1px solid var(--slate-700);}
+  table{width:100%;border-collapse:collapse;font-size:12.5px;min-width:820px;}
+  thead th{
+    text-align:left;padding:11px 14px;
+    font-family:var(--font-mono);font-size:10px;color:var(--text-500);
+    text-transform:uppercase;letter-spacing:0.06em;
+    background:var(--obsidian-900);border-bottom:1px solid var(--slate-700);
+    position:sticky;top:0;
+  }
+  tbody td{padding:12px 14px;border-bottom:1px solid var(--slate-700);color:var(--text-300);}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:hover{background:rgba(55,240,230,0.03);}
+  td.mono-cell{font-family:var(--font-mono);color:var(--text-100);}
+  .empty-state{padding:40px 20px;text-align:center;color:var(--text-500);font-size:12.5px;}
+  .empty-state .glyph{font-size:26px;margin-bottom:10px;opacity:0.5;}
+
+  /* ============================== LAB ============================== */
+  .lab-grid{display:grid;grid-template-columns:340px 1fr;gap:18px;align-items:start;}
+  .lab-tabs{display:flex;gap:6px;margin-bottom:16px;border-bottom:1px solid var(--slate-700);padding-bottom:2px;}
+  .lab-tab{
+    background:transparent;border:none;color:var(--text-500);font-size:12px;font-weight:600;
+    padding:9px 4px;border-bottom:2px solid transparent;
+  }
+  .lab-tab.active{color:var(--cyan-300);border-bottom-color:var(--cyan-400);}
+  .lab-panel{display:none;}
+  .lab-panel.active{display:block;}
+
+  .gauge-wrap{display:flex;align-items:center;gap:22px;padding:16px 4px 20px;flex-wrap:wrap;}
+  .gauge{position:relative;width:126px;height:126px;flex:none;}
+  .gauge svg{transform:rotate(-90deg);width:100%;height:100%;}
+  .gauge-bg{fill:none;stroke:var(--slate-700);stroke-width:9;}
+  .gauge-fg{fill:none;stroke:var(--cyan-400);stroke-width:9;stroke-linecap:round;transition:stroke-dashoffset .6s ease, stroke .3s ease;}
+  .gauge-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+  .gauge-center .val{font-family:var(--font-mono);font-size:22px;font-weight:700;}
+  .gauge-center .lbl{font-family:var(--font-mono);font-size:8.5px;color:var(--text-500);letter-spacing:0.06em;margin-top:2px;}
+  .gauge-meta{flex:1;min-width:180px;}
+  .gauge-verdict{font-family:var(--font-mono);font-size:13px;font-weight:700;letter-spacing:0.04em;margin-bottom:6px;}
+  .gauge-verdict.match{color:var(--cyan-300);}
+  .gauge-verdict.nomatch{color:var(--coral-400);}
+  .gauge-sub{font-size:11.5px;color:var(--text-500);}
+
+  .metric-list{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px;}
+  .metric-list .mi{background:var(--obsidian-900);border:1px solid var(--slate-700);border-radius:var(--radius-sm);padding:10px 12px;}
+  .metric-list .mi .k{font-family:var(--font-mono);font-size:9.5px;color:var(--text-500);text-transform:uppercase;letter-spacing:0.05em;}
+  .metric-list .mi .v{font-family:var(--font-mono);font-size:14px;color:var(--text-100);margin-top:3px;}
+
+  .identity-card{
+    margin-top:16px;padding:14px;border-radius:var(--radius-md);
+    border:1px solid var(--slate-700);background:var(--obsidian-900);
+    display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;
+  }
+  .identity-card .name{font-weight:700;font-size:13.5px;}
+  .identity-card .case{font-family:var(--font-mono);font-size:11px;color:var(--text-500);margin-top:3px;}
+
+  /* ============================== LOGIN GATE ============================== */
+  .gate{
+    position:fixed;inset:0;z-index:999;
+    background:
+      radial-gradient(ellipse 900px 700px at 50% 0%, rgba(55,240,230,0.08), transparent 60%),
+      var(--void-950);
+    display:flex;align-items:center;justify-content:center;
+    padding:20px;
+  }
+  .gate-panel{
+    width:100%;max-width:380px;
+    background:linear-gradient(180deg, var(--obsidian-800), var(--obsidian-850));
+    border:1px solid var(--slate-700);border-radius:var(--radius-lg);
+    padding:30px 28px 26px;
+    box-shadow:0 30px 80px rgba(0,0,0,0.55);
+  }
+  .gate-brand{display:flex;align-items:center;gap:12px;margin-bottom:22px;}
+  .gate-title{font-size:16px;font-weight:800;letter-spacing:0.03em;}
+  .gate-sub{font-family:var(--font-mono);font-size:10.5px;color:var(--text-500);margin-top:3px;}
+  .gate-tabs{display:flex;background:var(--obsidian-900);border:1px solid var(--slate-700);border-radius:var(--radius-sm);padding:3px;margin-bottom:20px;}
+  .gate-tab{flex:1;background:transparent;border:none;color:var(--text-500);font-size:11.5px;font-weight:700;padding:8px;border-radius:3px;letter-spacing:0.03em;}
+  .gate-tab.active{background:var(--slate-700);color:var(--text-100);}
+
+  /* ============================== RESPONSIVE ============================== */
+  @media (max-width:1080px){
+    .metric-grid{grid-template-columns:repeat(2,1fr);}
+    .grid-two{grid-template-columns:1fr;}
+    .form-grid{grid-template-columns:1fr;}
+    .lab-grid{grid-template-columns:1fr;}
+  }
+  @media (max-width:760px){
+    .app-shell{grid-template-columns:1fr;}
+    .sidebar{position:relative;height:auto;flex-direction:row;overflow-x:auto;}
+    .sidebar .nav{flex-direction:row;padding:10px;}
+    .nav-label{display:none;}
+    .sidebar-foot{display:none;}
+    .brand{border-bottom:none;}
+    .content{padding:20px 16px 50px;}
+    .metric-grid{grid-template-columns:1fr 1fr;}
+    .topbar{padding:14px 18px;}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{animation-duration:0.001ms !important;transition-duration:0.001ms !important;}
+  }
+</style>
+</head>
+<body>
+
+<!-- ============================== LOGIN GATE ============================== -->
+<div class="gate" id="gate">
+  <div class="gate-panel">
+    <div class="gate-brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M12 2L3 7v6c0 5 4 8.5 9 9 5-.5 9-4 9-9V7l-9-5z" stroke="#05070d" stroke-width="1.6"/></svg>
+      </div>
+      <div>
+        <div class="gate-title">ASTRONIC BIOMETRIC CORE</div>
+        <div class="gate-sub">RESTRICTED ACCESS // AUTHENTICATE TO PROCEED</div>
+      </div>
+    </div>
+
+    <div class="gate-tabs">
+      <button class="gate-tab active" id="tabLoginBtn" type="button">LOGIN</button>
+      <button class="gate-tab" id="tabRegisterBtn" type="button">REGISTER</button>
+    </div>
+
+    <form id="loginForm">
+      <div class="field">
+        <label for="loginUsername">Username</label>
+        <input type="text" id="loginUsername" name="username" autocomplete="username" required />
+      </div>
+      <div class="field">
+        <label for="loginPassword">Password</label>
+        <input type="password" id="loginPassword" name="password" autocomplete="current-password" required />
+      </div>
+      <button type="submit" class="btn block" id="loginSubmitBtn">
+        <span class="spinner"></span><span class="btn-label">Authenticate</span>
+      </button>
+      <div id="gateAlertSlot"></div>
+    </form>
+  </div>
+</div>
+
+<!-- ============================== TOASTS ============================== -->
+<div class="toast-stack" id="toastStack"></div>
+
+<!-- ============================== APP SHELL ============================== -->
+<div class="app-shell">
+
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M12 2L3 7v6c0 5 4 8.5 9 9 5-.5 9-4 9-9V7l-9-5z" stroke="#05070d" stroke-width="1.6"/></svg>
+      </div>
+      <div class="brand-text">
+        <span class="name">ASTRONIC CORE</span>
+        <span class="sub">BIOMETRIC COMMAND v2.1</span>
+      </div>
+    </div>
+
+    <nav class="nav">
+      <div class="nav-label">Operations</div>
+      <button class="nav-item active" data-view="dashboard" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
+        Dashboard Node
+      </button>
+      <button class="nav-item" data-view="registry" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 12a4 4 0 100-8 4 4 0 000 8z"/><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"/><path d="M18 8l2 2 3-3" stroke-width="1.7"/></svg>
+        Registry System
+      </button>
+      <button class="nav-item" data-view="directory" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 5h16M4 12h16M4 19h10"/></svg>
+        System Directory
+      </button>
+      <button class="nav-item" data-view="lab" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M9 2v6L4 19a2 2 0 002 3h12a2 2 0 002-3l-5-11V2"/><path d="M9 2h6"/></svg>
+        Biometric Analysis Lab
+      </button>
+    </nav>
+
+    <div class="sidebar-foot">
+      <div class="cluster-line">
+        <span class="pulse-dot offline" id="clusterDot"></span>
+        <span id="clusterStatusText">CLUSTER LINK: PROBING</span>
+      </div>
+      <div class="cluster-url" id="clusterUrl"></div>
+      <div id="sidebarClock">--:--:--</div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <div class="topbar-title">
+        <h1 id="topbarTitle">Dashboard Node</h1>
+        <span class="crumb" id="topbarCrumb">CORE // OPS // DASHBOARD</span>
+      </div>
+      <div class="topbar-right">
+        <span class="session-chip"><span class="pulse-dot" style="width:6px;height:6px;"></span><span id="sessionUserLabel">guest</span></span>
+        <button class="btn-ghost" id="logoutBtn" type="button">Sign out</button>
+      </div>
+    </header>
+
+    <main class="content">
+
+      <!-- ================= DASHBOARD NODE ================= -->
+      <section class="view active" id="view-dashboard">
+        <div class="metric-grid" id="metricGrid">
+          <div class="metric-card">
+            <div class="metric-label">Total Cache Records</div>
+            <div class="metric-value" id="metricTotalRecords">--</div>
+            <div class="metric-foot"><span class="dot"></span> registry entries indexed</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Fingerprint Vectors</div>
+            <div class="metric-value" id="metricFingerprints">--</div>
+            <div class="metric-foot"><span class="dot"></span> minutiae maps stored</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Face Embeddings</div>
+            <div class="metric-value" id="metricFaces">--</div>
+            <div class="metric-foot"><span class="dot"></span> 512-d vectors stored</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Voice Signatures</div>
+            <div class="metric-value" id="metricVoices">--</div>
+            <div class="metric-foot"><span class="dot"></span> MFCC profiles stored</div>
+          </div>
+        </div>
+
+        <div class="grid-two">
+          <div class="panel">
+            <div class="panel-header">
+              <h2>Clearance Classification Vectors</h2>
+              <span class="hint" id="dashboardSyncedAt">not yet synced</span>
+            </div>
+            <div style="height:280px;"><canvas id="clearanceChart"></canvas></div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <h2>Compute Cluster Tracking State</h2>
+            </div>
+            <div class="metric-list" style="grid-template-columns:1fr;">
+              <div class="mi">
+                <div class="k">Endpoint</div>
+                <div class="v mono" style="font-size:11px;word-break:break-all;" id="clusterEndpointVal">--</div>
+              </div>
+              <div class="mi">
+                <div class="k">Link Status</div>
+                <div class="v" id="clusterLinkVal">PROBING</div>
+              </div>
+              <div class="mi">
+                <div class="k">Face Engine (deepface)</div>
+                <div class="v" id="clusterFaceVal">--</div>
+              </div>
+              <div class="mi">
+                <div class="k">Voice Engine (librosa)</div>
+                <div class="v" id="clusterVoiceVal">--</div>
+              </div>
+            </div>
+            <button class="btn secondary block" style="margin-top:14px;" id="refreshDashboardBtn" type="button">Re-sync telemetry</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= REGISTRY SYSTEM ================= -->
+      <section class="view" id="view-registry">
+        <div class="panel">
+          <div class="panel-header">
+            <h2>Personnel Biometric Capture</h2>
+            <span class="hint">POST /api/add-criminal</span>
+          </div>
+
+          <form id="registryForm">
+            <div class="form-grid">
+              <div class="field">
+                <label for="regName">Employee Identity Name</label>
+                <input type="text" id="regName" name="criminal_name" placeholder="e.g. J. Okafor" required />
+              </div>
+              <div class="field">
+                <label for="regAge">Operational Age</label>
+                <input type="number" id="regAge" name="age" min="1" max="130" placeholder="e.g. 34" required />
+              </div>
+              <div class="field">
+                <label for="regClearance">Clearance Classification Layer</label>
+                <select id="regClearance" name="clearance_level" required>
+                  <option value="" disabled selected>Select classification</option>
+                  <option value="LOW">LOW</option>
+                  <option value="MEDIUM">MEDIUM</option>
+                  <option value="HIGH">HIGH</option>
+                  <option value="TOP_SECRET">TOP_SECRET</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="regCaseId">Secure ID Badge Code</label>
+                <input type="text" id="regCaseId" name="case_id" placeholder="e.g. BADGE-00417" required />
+              </div>
+            </div>
+
+            <div class="field">
+              <label>Biometric Sample Nodes</label>
+              <div class="desc">At least one sample is required. Unsupported or corrupted files are rejected server-side with a descriptive error.</div>
+            </div>
+
+            <div class="form-grid" style="grid-template-columns:repeat(3,1fr);">
+              <div class="dropzone" id="dzFingerprint" data-kind="fingerprint">
+                <input type="file" id="fileFingerprint" name="fingerprint" accept="image/*" />
+                <svg class="dropzone-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 2a5 5 0 015 5v2M7 9V7a5 5 0 015-5M12 12a5 5 0 015 5v1a5 5 0 01-10 0M7 12v5a5 5 0 005 5"/></svg>
+                <div class="dropzone-title">Fingerprint Image</div>
+                <div class="dropzone-sub" id="dzFingerprintSub">drop or click to upload</div>
+                <div class="dropzone-preview" id="dzFingerprintPreview"></div>
+              </div>
+
+              <div class="dropzone" id="dzFace" data-kind="face">
+                <input type="file" id="fileFace" name="face" accept="image/*" />
+                <svg class="dropzone-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"/></svg>
+                <div class="dropzone-title">Mugshot Image</div>
+                <div class="dropzone-sub" id="dzFaceSub">drop or click to upload</div>
+                <div class="dropzone-preview" id="dzFacePreview"></div>
+              </div>
+
+              <div class="dropzone" id="dzVoice" data-kind="voice">
+                <input type="file" id="fileVoice" name="voice" accept="audio/*" />
+                <svg class="dropzone-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3a3 3 0 00-3 3v6a3 3 0 006 0V6a3 3 0 00-3-3z"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg>
+                <div class="dropzone-title">Voice Audio File</div>
+                <div class="dropzone-sub" id="dzVoiceSub">drop or click to upload (.wav)</div>
+                <div class="dropzone-preview" id="dzVoicePreview"></div>
+              </div>
+            </div>
+
+            <button type="submit" class="btn" style="margin-top:6px;" id="registrySubmitBtn">
+              <span class="spinner"></span><span class="btn-label">Commit Registry Entry</span>
+            </button>
+            <div id="registryAlertSlot"></div>
+          </form>
+        </div>
+      </section>
+
+      <!-- ================= SYSTEM DIRECTORY ================= -->
+      <section class="view" id="view-directory">
+        <div class="panel">
+          <div class="panel-header">
+            <h2>Personnel Registry Log</h2>
+            <div style="display:flex;gap:10px;align-items:center;">
+              <span class="hint" id="directoryCount">0 records</span>
+              <button class="btn-ghost" id="refreshDirectoryBtn" type="button">Refresh</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Identity</th>
+                  <th>Age</th>
+                  <th>Clearance</th>
+                  <th>Badge Code</th>
+                  <th>Fingerprint</th>
+                  <th>Face</th>
+                  <th>Voice</th>
+                  <th>Logged</th>
+                </tr>
+              </thead>
+              <tbody id="directoryTableBody">
+                <tr><td colspan="9"><div class="empty-state"><div class="glyph">◌</div>Awaiting directory sync…</div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= BIOMETRIC ANALYSIS LAB ================= -->
+      <section class="view" id="view-lab">
+        <div class="lab-grid">
+
+          <div class="panel">
+            <div class="panel-header"><h2>Query Sample Stream</h2></div>
+
+            <div class="field">
+              <label>Fingerprint Sample</label>
+              <div class="dropzone" id="dzLabFingerprint" data-kind="lab-fingerprint">
+                <input type="file" id="fileLabFingerprint" accept="image/*" />
+                <svg class="dropzone-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 2a5 5 0 015 5v2M7 9V7a5 5 0 015-5M12 12a5 5 0 015 5v1a5 5 0 01-10 0M7 12v5a5 5 0 005 5"/></svg>
+                <div class="dropzone-title">Inject fingerprint image</div>
+                <div class="dropzone-sub" id="dzLabFingerprintSub">drop or click to upload</div>
+                <div class="dropzone-preview" id="dzLabFingerprintPreview"></div>
+              </div>
+              <button class="btn block" style="margin-top:10px;" id="runFingerprintBtn" type="button" disabled>
+                <span class="spinner"></span><span class="btn-label">Run Fingerprint Cross-Match</span>
+              </button>
+            </div>
+
+            <div class="field">
+              <label>Face Sample</label>
+              <div class="dropzone" id="dzLabFace" data-kind="lab-face">
+                <input type="file" id="fileLabFace" accept="image/*" />
+                <svg class="dropzone-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"/></svg>
+                <div class="dropzone-title">Inject mugshot image</div>
+                <div class="dropzone-sub" id="dzLabFaceSub">drop or click to upload</div>
+                <div class="dropzone-preview" id="dzLabFacePreview"></div>
+              </div>
+              <button class="btn block" style="margin-top:10px;" id="runFaceBtn" type="button" disabled>
+                <span class="spinner"></span><span class="btn-label">Run Face Embedding Match</span>
+              </button>
+            </div>
+
+            <div class="field">
+              <label>Voice Sample</label>
+              <div class="dropzone" id="dzLabVoice" data-kind="lab-voice">
+                <input type="file" id="fileLabVoice" accept="audio/*" />
+                <svg class="dropzone-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3a3 3 0 00-3 3v6a3 3 0 006 0V6a3 3 0 00-3-3z"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg>
+                <div class="dropzone-title">Inject voice audio (.wav)</div>
+                <div class="dropzone-sub" id="dzLabVoiceSub">drop or click to upload</div>
+                <div class="dropzone-preview" id="dzLabVoicePreview"></div>
+              </div>
+              <button class="btn block" style="margin-top:10px;" id="runVoiceBtn" type="button" disabled>
+                <span class="spinner"></span><span class="btn-label">Run Voice Signature Match</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="lab-tabs">
+              <button class="lab-tab active" data-lab="fingerprint" type="button">Fingerprint Cross-Match Engine</button>
+              <button class="lab-tab" data-lab="face" type="button">Deep Face Embedding Vector Matcher</button>
+              <button class="lab-tab" data-lab="voice" type="button">Voice Acoustic Signature Tracker</button>
+            </div>
+
+            <div class="lab-panel active" id="lab-fingerprint">
+              <div id="fingerprintResultSlot">
+                <div class="empty-state"><div class="glyph">⌀</div>No fingerprint query executed yet. Inject a sample on the left and run the engine.</div>
+              </div>
+            </div>
+
+            <div class="lab-panel" id="lab-face">
+              <div id="faceResultSlot">
+                <div class="empty-state"><div class="glyph">⌀</div>No face query executed yet. Inject a mugshot on the left and run the engine.</div>
+              </div>
+            </div>
+
+            <div class="lab-panel" id="lab-voice">
+              <div id="voiceResultSlot">
+                <div class="empty-state"><div class="glyph">⌀</div>No voice query executed yet. Inject an audio sample on the left and run the engine.</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ==========================================================================
+  // CONFIG
+  // ==========================================================================
+  const API_BASE = "https://astronicdefense-astronic-ai-fingerprint.hf.space";
+
+  const state = {
+    authenticated:false,
+    username:null,
+    labFiles:{ fingerprint:null, face:null, voice:null },
+    regFiles:{ fingerprint:null, face:null, voice:null },
+    clearanceChart:null
+  };
+
+  // ==========================================================================
+  // DOM HELPERS
+  // ==========================================================================
+  const $ = (sel, root) => (root || document).querySelector(sel);
+  const $$ = (sel, root) => Array.from((root || document).querySelectorAll(sel));
+
+  function escapeHtml(str){
+    return String(str == null ? "" : str).replace(/[&<>"']/g, (c) => (
+      { "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]
+    ));
+  }
+
+  // ==========================================================================
+  // TOASTS + INLINE ALERTS
+  // ==========================================================================
+  function showToast(title, message, isError){
+    const stack = $("#toastStack");
+    const el = document.createElement("div");
+    el.className = "toast" + (isError ? " error" : "");
+    el.innerHTML =
+      '<div class="t-title">' + escapeHtml(title) + '</div>' +
+      '<div class="t-body">' + escapeHtml(message) + '</div>';
+    stack.appendChild(el);
+    setTimeout(() => {
+      el.style.transition = "opacity .3s ease, transform .3s ease";
+      el.style.opacity = "0";
+      el.style.transform = "translateX(16px)";
+      setTimeout(() => el.remove(), 320);
+    }, 5200);
+  }
+
+  function inlineAlert(slotEl, message, isError){
+    slotEl.innerHTML =
+      '<div class="inline-alert ' + (isError ? "error" : "success") + '">' +
+      '<span>' + (isError ? "⚠" : "✓") + '</span><span>' + escapeHtml(message) + '</span></div>';
+  }
+
+  function clearSlot(slotEl){ slotEl.innerHTML = ""; }
+
+  // ==========================================================================
+  // API LAYER
+  // ==========================================================================
+  async function apiRequest(path, options){
+    options = options || {};
+    let response;
+    try{
+      response = await fetch(API_BASE + path, options);
+    }catch(networkErr){
+      throw new Error("Unable to reach compute cluster at " + API_BASE + ". Confirm the endpoint is online and CORS is permitted.");
+    }
+
+    let body = null;
+    const contentType = response.headers.get("content-type") || "";
+    if(contentType.indexOf("application/json") !== -1){
+      try{ body = await response.json(); }catch(parseErr){ body = null; }
+    }
+
+    if(!response.ok){
+      const detail = (body && (body.detail || body.message)) || ("Request failed with status " + response.status);
+      const err = new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
+      err.status = response.status;
+      err.body = body;
+      throw err;
+    }
+    return body;
+  }
+
+  function apiJson(path, method, payload){
+    return apiRequest(path, {
+      method: method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+  }
+
+  function apiForm(path, formData){
+    return apiRequest(path, { method: "POST", body: formData });
+  }
+
+  // ==========================================================================
+  // VIEW ROUTING
+  // ==========================================================================
+  const viewMeta = {
+    dashboard:{ title:"Dashboard Node", crumb:"CORE // OPS // DASHBOARD" },
+    registry:{ title:"Registry System", crumb:"CORE // OPS // REGISTRY" },
+    directory:{ title:"System Directory", crumb:"CORE // OPS // DIRECTORY" },
+    lab:{ title:"Biometric Analysis Lab", crumb:"CORE // OPS // ANALYSIS-LAB" }
+  };
+
+  function setView(name){
+    $$(".view").forEach((v) => v.classList.remove("active"));
+    $("#view-" + name).classList.add("active");
+    $$(".nav-item").forEach((b) => b.classList.toggle("active", b.dataset.view === name));
+    $("#topbarTitle").textContent = viewMeta[name].title;
+    $("#topbarCrumb").textContent = viewMeta[name].crumb;
+
+    if(name === "dashboard") loadDashboard();
+    if(name === "directory") loadDirectory();
+  }
+
+  $$(".nav-item").forEach((btn) => {
+    btn.addEventListener("click", () => setView(btn.dataset.view));
+  });
+
+  // ==========================================================================
+  // CLOCK
+  // ==========================================================================
+  function tickClock(){
+    const now = new Date();
+    $("#sidebarClock").textContent = now.toISOString().slice(0,19).replace("T"," ") + " UTC";
+  }
+  tickClock();
+  setInterval(tickClock, 1000);
+
+  // ==========================================================================
+  // AUTH
+  // ==========================================================================
+  let gateMode = "login";
+
+  $("#tabLoginBtn").addEventListener("click", () => {
+    gateMode = "login";
+    $("#tabLoginBtn").classList.add("active");
+    $("#tabRegisterBtn").classList.remove("active");
+    $("#loginSubmitBtn .btn-label").textContent = "Authenticate";
+    clearSlot($("#gateAlertSlot"));
+  });
+  $("#tabRegisterBtn").addEventListener("click", () => {
+    gateMode = "register";
+    $("#tabRegisterBtn").classList.add("active");
+    $("#tabLoginBtn").classList.remove("active");
+    $("#loginSubmitBtn .btn-label").textContent = "Create access account";
+    clearSlot($("#gateAlertSlot"));
+  });
+
+  $("#loginForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const username = $("#loginUsername").value.trim();
+    const password = $("#loginPassword").value;
+    const btn = $("#loginSubmitBtn");
+    btn.classList.add("loading");
+    btn.disabled = true;
+    clearSlot($("#gateAlertSlot"));
+    try{
+      const path = gateMode === "login" ? "/api/login" : "/api/register";
+      const result = await apiJson(path, "POST", { username, password });
+      if(gateMode === "register"){
+        inlineAlert($("#gateAlertSlot"), (result && result.message) || "Account created. Switch to LOGIN to authenticate.", false);
+        gateMode = "login";
+        $("#tabLoginBtn").click();
+      } else {
+        state.authenticated = true;
+        state.username = username;
+        onAuthenticated();
+      }
+    }catch(err){
+      inlineAlert($("#gateAlertSlot"), err.message, true);
+    }finally{
+      btn.classList.remove("loading");
+      btn.disabled = false;
+    }
+  });
+
+  function onAuthenticated(){
+    $("#gate").style.display = "none";
+    $("#sessionUserLabel").textContent = state.username || "guest";
+    checkClusterHealth();
+    loadDashboard();
+  }
+
+  $("#logoutBtn").addEventListener("click", () => {
+    state.authenticated = false;
+    state.username = null;
+    $("#loginUsername").value = "";
+    $("#loginPassword").value = "";
+    $("#gate").style.display = "flex";
+    showToast("Session ended", "Access session terminated locally.", false);
+  });
+
+  // ==========================================================================
+  // CLUSTER HEALTH
+  // ==========================================================================
+  $("#clusterUrl").textContent = API_BASE.replace("https://","");
+  $("#clusterEndpointVal").textContent = API_BASE;
+
+  async function checkClusterHealth(){
+    try{
+      const health = await apiRequest("/api/health", { method:"GET" });
+      $("#clusterDot").classList.remove("offline");
+      $("#clusterStatusText").textContent = "CLUSTER LINK: ONLINE";
+      $("#clusterLinkVal").textContent = "ONLINE";
+      $("#clusterFaceVal").innerHTML = health.deepface_available
+        ? '<span class="flag yes">ACTIVE</span>' : '<span class="flag no">UNAVAILABLE</span>';
+      $("#clusterVoiceVal").innerHTML = health.librosa_available
+        ? '<span class="flag yes">ACTIVE</span>' : '<span class="flag no">UNAVAILABLE</span>';
+    }catch(err){
+      $("#clusterDot").classList.add("offline");
+      $("#clusterStatusText").textContent = "CLUSTER LINK: UNREACHABLE";
+      $("#clusterLinkVal").textContent = "UNREACHABLE";
+      $("#clusterFaceVal").textContent = "--";
+      $("#clusterVoiceVal").textContent = "--";
+    }
+  }
+
+  // ==========================================================================
+  // DASHBOARD NODE
+  // ==========================================================================
+  const clearanceColors = {
+    LOW:"#7783a6", MEDIUM:"#ffb454", HIGH:"#37f0e6", TOP_SECRET:"#ff5566", UNSPECIFIED:"#3a4360"
+  };
+
+  async function loadDashboard(){
+    try{
+      const data = await apiRequest("/api/dashboard", { method:"GET" });
+      $("#metricTotalRecords").textContent = data.total_records;
+      $("#metricFingerprints").textContent = data.total_fingerprints;
+      $("#metricFaces").textContent = data.total_faces;
+      $("#metricVoices").textContent = data.total_voice_profiles;
+      $("#dashboardSyncedAt").textContent = "synced " + data.generated_at + " UTC";
+      renderClearanceChart(data.clearance_distribution || []);
+    }catch(err){
+      showToast("Dashboard sync failed", err.message, true);
+      $("#dashboardSyncedAt").textContent = "sync failed";
+    }
+    checkClusterHealth();
+  }
+
+  function renderClearanceChart(rows){
+    const labels = rows.map((r) => r.clearance_level);
+    const values = rows.map((r) => r.count);
+    const colors = labels.map((l) => clearanceColors[l] || "#556082");
+    const ctx = $("#clearanceChart").getContext("2d");
+
+    if(state.clearanceChart){
+      state.clearanceChart.data.labels = labels;
+      state.clearanceChart.data.datasets[0].data = values;
+      state.clearanceChart.data.datasets[0].backgroundColor = colors;
+      state.clearanceChart.update();
+      return;
+    }
+
+    state.clearanceChart = new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels: labels,
+        datasets: [{
+          label: "Records",
+          data: values,
+          backgroundColor: colors,
+          borderRadius: 4,
+          maxBarThickness: 46
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display:false } },
+        scales: {
+          x: { ticks: { color:"#8590b3", font:{ family:"IBM Plex Mono", size:10 } }, grid: { color:"rgba(122,133,166,0.08)" } },
+          y: { beginAtZero:true, ticks: { color:"#8590b3", font:{ family:"IBM Plex Mono", size:10 }, precision:0 }, grid: { color:"rgba(122,133,166,0.08)" } }
+        }
+      }
+    });
+  }
+
+  $("#refreshDashboardBtn").addEventListener("click", loadDashboard);
+
+  // ==========================================================================
+  // DROPZONE FACTORY
+  // ==========================================================================
+  function setupDropzone(zoneId, inputId, subId, previewId, isImage, onFile){
+    const zone = $("#" + zoneId);
+    const input = $("#" + inputId);
+    const sub = $("#" + subId);
+    const preview = $("#" + previewId);
+
+    function handleFile(file){
+      if(!file) return;
+      zone.classList.add("filled");
+      sub.textContent = file.name + "  (" + Math.round(file.size/1024) + " KB)";
+      preview.innerHTML = "";
+      if(isImage && file.type.indexOf("image/") === 0){
+        const img = document.createElement("img");
+        img.src = URL.createObjectURL(file);
+        preview.appendChild(img);
+      }
+      onFile(file);
+    }
+
+    input.addEventListener("change", () => handleFile(input.files[0]));
+    zone.addEventListener("dragover", (e) => { e.preventDefault(); zone.classList.add("dragover"); });
+    zone.addEventListener("dragleave", () => zone.classList.remove("dragover"));
+    zone.addEventListener("drop", (e) => {
+      e.preventDefault();
+      zone.classList.remove("dragover");
+      if(e.dataTransfer.files && e.dataTransfer.files[0]){
+        input.files = e.dataTransfer.files;
+        handleFile(e.dataTransfer.files[0]);
+      }
+    });
+  }
+
+  setupDropzone("dzFingerprint","fileFingerprint","dzFingerprintSub","dzFingerprintPreview", true, (f) => state.regFiles.fingerprint = f);
+  setupDropzone("dzFace","fileFace","dzFaceSub","dzFacePreview", true, (f) => state.regFiles.face = f);
+  setupDropzone("dzVoice","fileVoice","dzVoiceSub","dzVoicePreview", false, (f) => state.regFiles.voice = f);
+
+  setupDropzone("dzLabFingerprint","fileLabFingerprint","dzLabFingerprintSub","dzLabFingerprintPreview", true, (f) => {
+    state.labFiles.fingerprint = f; $("#runFingerprintBtn").disabled = false;
+  });
+  setupDropzone("dzLabFace","fileLabFace","dzLabFaceSub","dzLabFacePreview", true, (f) => {
+    state.labFiles.face = f; $("#runFaceBtn").disabled = false;
+  });
+  setupDropzone("dzLabVoice","fileLabVoice","dzLabVoiceSub","dzLabVoicePreview", false, (f) => {
+    state.labFiles.voice = f; $("#runVoiceBtn").disabled = false;
+  });
+
+  // ==========================================================================
+  // REGISTRY SYSTEM — add-criminal
+  // ==========================================================================
+  $("#registryForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const btn = $("#registrySubmitBtn");
+    clearSlot($("#registryAlertSlot"));
+
+    if(!state.regFiles.fingerprint && !state.regFiles.face && !state.regFiles.voice){
+      inlineAlert($("#registryAlertSlot"), "At least one biometric sample node must be populated before commit.", true);
+      return;
+    }
+
+    const fd = new FormData();
+    fd.append("criminal_name", $("#regName").value.trim());
+    fd.append("age", $("#regAge").value);
+    fd.append("clearance_level", $("#regClearance").value);
+    fd.append("case_id", $("#regCaseId").value.trim());
+    if(state.regFiles.fingerprint) fd.append("fingerprint", state.regFiles.fingerprint);
+    if(state.regFiles.face) fd.append("face", state.regFiles.face);
+    if(state.regFiles.voice) fd.append("voice", state.regFiles.voice);
+
+    btn.classList.add("loading");
+    btn.disabled = true;
+    try{
+      const result = await apiForm("/api/add-criminal", fd);
+      inlineAlert($("#registryAlertSlot"), (result && result.message) || "Biometric record committed to registry.", false);
+      showToast("Registry commit", "Record for " + (result.record ? result.record.criminal_name : "subject") + " stored.", false);
+      $("#registryForm").reset();
+      [["dzFingerprint","dzFingerprintSub","dzFingerprintPreview","drop or click to upload"],
+       ["dzFace","dzFaceSub","dzFacePreview","drop or click to upload"],
+       ["dzVoice","dzVoiceSub","dzVoicePreview","drop or click to upload (.wav)"]
+      ].forEach(([zoneId,subId,prevId,defaultText]) => {
+        $("#"+zoneId).classList.remove("filled");
+        $("#"+subId).textContent = defaultText;
+        $("#"+prevId).innerHTML = "";
+      });
+      state.regFiles = { fingerprint:null, face:null, voice:null };
+    }catch(err){
+      inlineAlert($("#registryAlertSlot"), err.message, true);
+    }finally{
+      btn.classList.remove("loading");
+      btn.disabled = false;
+    }
+  });
+
+  // ==========================================================================
+  // SYSTEM DIRECTORY
+  // ==========================================================================
+  function clearanceBadge(level){
+    const cls = (level || "unspecified").toLowerCase();
+    return '<span class="badge ' + cls + '">' + escapeHtml(level || "UNSPECIFIED") + '</span>';
+  }
+
+  function flagCell(value){
+    return value ? '<span class="flag yes">ON FILE</span>' : '<span class="flag no">—</span>';
+  }
+
+  async function loadDirectory(){
+    const tbody = $("#directoryTableBody");
+    tbody.innerHTML = '<tr><td colspan="9"><div class="empty-state"><div class="glyph">◌</div>Syncing personnel directory…</div></td></tr>';
+    try{
+      const records = await apiRequest("/api/records", { method:"GET" });
+      const safeRecords = Array.isArray(records) ? records.slice() : [];
+      safeRecords.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
+
+      $("#directoryCount").textContent = safeRecords.length + (safeRecords.length === 1 ? " record" : " records");
+
+      if(safeRecords.length === 0){
+        tbody.innerHTML = '<tr><td colspan="9"><div class="empty-state"><div class="glyph">∅</div>No personnel records in registry yet.</div></td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = safeRecords.map((r) => {
+        const hasFp = r.has_fingerprint === true;
+        const hasFace = r.has_face === true;
+        const hasVoice = r.has_voice === true;
+        return (
+          '<tr>' +
+            '<td class="mono-cell">#' + escapeHtml(r.id) + '</td>' +
+            '<td>' + escapeHtml(r.criminal_name) + '</td>' +
+            '<td class="mono-cell">' + (r.age != null ? escapeHtml(r.age) : "—") + '</td>' +
+            '<td>' + clearanceBadge(r.clearance_level) + '</td>' +
+            '<td class="mono-cell">' + escapeHtml(r.case_id) + '</td>' +
+            '<td>' + flagCell(hasFp) + '</td>' +
+            '<td>' + flagCell(hasFace) + '</td>' +
+            '<td>' + flagCell(hasVoice) + '</td>' +
+            '<td class="mono-cell">' + escapeHtml(r.created_at) + '</td>' +
+          '</tr>'
+        );
+      }).join("");
+    }catch(err){
+      tbody.innerHTML = '<tr><td colspan="9"><div class="empty-state"><div class="glyph">⚠</div>' + escapeHtml(err.message) + '</div></td></tr>';
+      showToast("Directory sync failed", err.message, true);
+    }
+  }
+
+  $("#refreshDirectoryBtn").addEventListener("click", loadDirectory);
+
+  // ==========================================================================
+  // BIOMETRIC ANALYSIS LAB
+  // ==========================================================================
+  $$(".lab-tab").forEach((tab) => {
+    tab.addEventListener("click", () => {
+      $$(".lab-tab").forEach((t) => t.classList.remove("active"));
+      $$(".lab-panel").forEach((p) => p.classList.remove("active"));
+      tab.classList.add("active");
+      $("#lab-" + tab.dataset.lab).classList.add("active");
+    });
+  });
+
+  function gaugeSvg(pct, matched){
+    const r = 52, c = 2 * Math.PI * r;
+    const clamped = Math.max(0, Math.min(100, pct));
+    const offset = c - (clamped/100) * c;
+    const color = matched ? "var(--cyan-400)" : "var(--coral-500)";
+    return (
+      '<div class="gauge">' +
+        '<svg viewBox="0 0 120 120">' +
+          '<circle class="gauge-bg" cx="60" cy="60" r="' + r + '"/>' +
+          '<circle class="gauge-fg" cx="60" cy="60" r="' + r + '" style="stroke:' + color + ';stroke-dasharray:' + c + ';stroke-dashoffset:' + offset + '"/>' +
+        '</svg>' +
+        '<div class="gauge-center"><span class="val">' + clamped.toFixed(1) + '</span><span class="lbl">CONFIDENCE</span></div>' +
+      '</div>'
+    );
+  }
+
+  function renderLabResult(slot, opts){
+    // opts: { matched, confidence, threshold, identity:{name,caseId,clearance}|null, metrics:[{k,v}], noMatchDetail }
+    let html = '<div class="gauge-wrap">' + gaugeSvg(opts.confidence, opts.matched) + '<div class="gauge-meta">';
+    html += '<div class="gauge-verdict ' + (opts.matched ? "match" : "nomatch") + '">' + (opts.matched ? "◉ POSITIVE IDENTIFICATION" : "◎ NO CONFIDENT MATCH") + '</div>';
+    html += '<div class="gauge-sub">Match threshold: ' + opts.threshold.toFixed(1) + ' &nbsp;•&nbsp; Observed: ' + opts.confidence.toFixed(2) + '</div>';
+    if(!opts.matched && opts.noMatchDetail){
+      html += '<div class="gauge-sub" style="margin-top:6px;">' + escapeHtml(opts.noMatchDetail) + '</div>';
+    }
+    html += '</div></div>';
+
+    if(opts.identity){
+      html += '<div class="identity-card"><div><div class="name">' + escapeHtml(opts.identity.name) +
+        '</div><div class="case">CASE ' + escapeHtml(opts.identity.caseId) + '</div></div>' +
+        clearanceBadge(opts.identity.clearance) + '</div>';
+    }
+
+    if(opts.metrics && opts.metrics.length){
+      html += '<div class="metric-list">' + opts.metrics.map((m) =>
+        '<div class="mi"><div class="k">' + escapeHtml(m.k) + '</div><div class="v">' + escapeHtml(m.v) + '</div></div>'
+      ).join("") + '</div>';
+    }
+
+    slot.innerHTML = html;
+  }
+
+  async function runEngine(kind){
+    const map = {
+      fingerprint: { file:"fingerprint", endpoint:"/api/match", field:"image", btnId:"runFingerprintBtn", slotId:"fingerprintResultSlot" },
+      face:        { file:"face",        endpoint:"/api/match-face", field:"image", btnId:"runFaceBtn", slotId:"faceResultSlot" },
+      voice:       { file:"voice",       endpoint:"/api/match-voice", field:"audio", btnId:"runVoiceBtn", slotId:"voiceResultSlot" }
+    };
+    const cfg = map[kind];
+    const file = state.labFiles[cfg.file];
+    const btn = $("#" + cfg.btnId);
+    const slot = $("#" + cfg.slotId);
+
+    if(!file){
+      showToast("Missing sample", "Inject a " + cfg.file + " sample before running the engine.", true);
+      return;
+    }
+
+    const fd = new FormData();
+    fd.append(cfg.field, file);
+
+    btn.classList.add("loading");
+    btn.disabled = true;
+    slot.innerHTML = '<div class="empty-state"><div class="glyph">◌</div>Running ' + cfg.file + ' cross-match against registry…</div>';
+
+    try{
+      const result = await apiForm(cfg.endpoint, fd);
+      const identity = result.data ? {
+        name: result.data.criminal_name,
+        caseId: result.data.case_id,
+        clearance: result.data.clearance_level
+      } : null;
+
+      let metrics = [];
+      if(kind === "fingerprint" && result.data){
+        metrics = [
+          { k:"Minutiae Matched", v: result.data.minutiae_matched },
+          { k:"Query Minutiae", v: result.data.minutiae_query_total },
+          { k:"Reference Minutiae", v: result.data.minutiae_reference_total },
+          { k:"Confidence", v: result.confidence.toFixed(2) }
+        ];
+      } else if(kind === "face" && result.data){
+        metrics = [
+          { k:"Cosine Similarity", v: result.data.cosine_similarity.toFixed(4) },
+          { k:"Confidence", v: result.confidence.toFixed(2) }
+        ];
+      } else if(kind === "voice" && result.data){
+        metrics = [
+          { k:"Cosine Similarity", v: result.data.cosine_similarity.toFixed(4) },
+          { k:"DTW Distance", v: result.data.dtw_distance.toFixed(4) },
+          { k:"Confidence", v: result.confidence.toFixed(2) }
+        ];
+      }
+
+      renderLabResult(slot, {
+        matched: !!result.match_found,
+        confidence: Number(result.confidence) || 0,
+        threshold: Number(result.threshold) || 0,
+        identity: identity,
+        metrics: metrics,
+        noMatchDetail: result.detail
+      });
+
+      showToast(
+        result.match_found ? cfg.file.toUpperCase() + " MATCH FOUND" : "NO MATCH",
+        result.match_found && identity ? identity.name + " (" + identity.caseId + ")" : (result.detail || "No confident match in registry."),
+        !result.match_found
+      );
+    }catch(err){
+      slot.innerHTML = '<div class="inline-alert error"><span>⚠</span><span>' + escapeHtml(err.message) + '</span></div>';
+      showToast("Engine execution failed", err.message, true);
+    }finally{
+      btn.classList.remove("loading");
+      btn.disabled = false;
+    }
+  }
+
+  $("#runFingerprintBtn").addEventListener("click", () => runEngine("fingerprint"));
+  $("#runFaceBtn").addEventListener("click", () => runEngine("face"));
+  $("#runVoiceBtn").addEventListener("click", () => runEngine("voice"));
+
+})();
+</script>
+</body>
+</html>
