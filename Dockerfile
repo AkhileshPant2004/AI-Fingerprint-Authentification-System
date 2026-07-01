@@ -1,33 +1,24 @@
-# Base dynamic image with Python environment running
-FROM python:3.10-slim
+FROM docker.io/library/python:3.10-slim@sha256:5f9928ea39771e8ddf4fb9a96ab24f65f087793635614405a1dc9384f040852e
 
-# Install system-level graphics and internal OS mapping pipelines
+# Install system dependencies (using libgl1 instead of the deprecated libgl1-mesa-glx)
 RUN apt-get update && apt-get install -y \
     build-essential \
-    libgl1-mesa-glx \
+    libgl1 \
     libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
-# Setup non-privilege isolated container user
+# Create a non-root user
 RUN useradd -m -u 1000 user
-USER user
-ENV HOME=/home/user \
-    PATH=/home/user/.local/bin:$PATH
 
-WORKDIR $HOME/app
+# Set up the working directory
+WORKDIR /home/user/app
 
-# Pre-verify storage dimensions caching setup
+# Create necessary application directories
 RUN mkdir -p fingerprints uploads
 
-# Install assets components modules mapping
+# Copy requirements and install Python dependencies
 COPY --chown=user:user requirements.txt .
 RUN pip install --no-cache-dir --user -r requirements.txt
 
-# Sync application source data
+# Copy the rest of the application files
 COPY --chown=user:user . .
-
-# Open dynamic port mapping for Streamlit container execution context
-EXPOSE 7860
-
-# Launch application orchestration via default endpoint parameters mapping
-CMD ["streamlit", "run", "app.py", "--server.port=7860", "--server.address=0.0.0.0"]
